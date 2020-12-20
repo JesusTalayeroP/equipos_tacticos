@@ -236,8 +236,8 @@ class SoldierController extends Controller
 			"team_id" => "no team id",
 			"team_name" => "no team name",
 			"leader_id" => "no leader id",
-			"leader_rank" => "no captain rank",
-			"leader_surname" => "no captain surname"
+			"leader_rank" => "no leader rank",
+			"leader_surname" => "no leader surname"
 		];
 		// En caso de que tenga equipo, guardar sus datos
 		if ($soldier->team_id){

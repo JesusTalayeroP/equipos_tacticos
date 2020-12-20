@@ -191,7 +191,7 @@ class MissionController extends Controller
 			$soldiers = SoldierMission::all();
 			// Recorre la lista de soldados
 			foreach ($soldiers as $soldier) {
-				// Si el soldado ha realizado la misión que estamos guardando
+				// Si el soldado ha realizado la misión que estamos buscando
 				if($soldier->mission_id == $id) {
 					// Busca el soldado
 					$soldier = Soldier::find($soldier->soldier_id);

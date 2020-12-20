@@ -242,8 +242,16 @@ class TeamController extends Controller
 		// Buscar la misión por su id
 		$mission = Mission::find($data->mission);
 
+		$teams = Team::all();
+		for ($i=0; $i < count($teams); $i++) { 
+			$thisTeam = $teams[$i];
+			if($thisTeam->mission_id == $data->mission) {
+				$exit = true;
+				$response = "Esa misión ya está asignada a un equipo";
+			}
+		}
 		//Si hay un json válido, validar los datos y añadir la misión
-		if($data && $team && $mission && !$team->mission_id){
+		if($data && $team && $mission && !$team->mission_id && !$exit){
 
 			// Asignar la misión al equipo		
 			$team->mission_id = (isset($data->mission) ? $data->mission : $team->mission);
@@ -301,6 +309,138 @@ class TeamController extends Controller
 		}			
 		// Envia el id de los soldados que pertenecen al equipo
 		return $response;
+	}
+
+	/** GET
+	 * Muestra el jefe de un equipo así como todos los soldados pertenecientes
+	 *
+	 * Busca el equipo por $id introducido y devuelve los datos del jefe del equipo
+	 * así como los datos de todos los soldados que pertecen al equipo actualmente
+	 *
+	 * @return Jefe y soldados que pertenecen al equipo
+	 */
+	public function teamMembers ($id) {
+		$response = "";
+		// Buscar el equipo por id
+		$team = Team::find($id);
+		
+		$response = [];
+		// Si el equipo encontrado tiene lider
+		if($team->leader_id) {
+			// Buscar el lider del equipo
+			$leader = Soldier::find($team->leader_id);
+			// Guarda sus datos
+			$response [] = [
+			"leader_name" => $leader->name,
+			"leader_surname" => $leader->surname,
+			"leader_birthdate" => $leader->birthdate,
+			"leader_incorporation_date" => $leader->incorporation_date,
+			"leader_badge_number" => $leader->badge_number,
+			"leader_rank" => $leader->rank,
+			"leader_state" => $leader->state
+			];
+		}
+		// Busca todos los soldados
+		$soldiers = Soldier::all();
+		// Recorre los soldados
+		foreach ($soldiers as $soldier) {
+			// Si el soldado pertenece al equipo
+			if($soldier->team_id == $id) {
+				// Guarda sus datos
+				$response [] = [
+					"soldier_name" => $soldier->name,
+					"soldier_surname" => $soldier->surname,
+					"soldier_birthdate" => $soldier->birthdate,
+					"soldier_incorporation_date" => $soldier->incorporation_date,
+					"soldier_badge_number" => $soldier->badge_number,
+					"soldier_rank" => $soldier->rank,
+					"soldier_state" => $soldier->state
+				];
+			}
+		}
+		// Si el equipo no existe
+		if(!$team) {
+			$response = "Equipo no encontrado";
+		}
+		// Devuelve los detalles de los soldados
+		return response()->json($response);
+	}
+
+
+	public function sackSoldier (Request $request) {
+		$response = "";
+		//Leer el contenido de la petición
+		$data = $request->getContent();
+
+		//Decodificar el json
+		$data = json_decode($data);
+		// Buscar al soldado que se va a eliminar del equipo
+		$soldier = Soldier::find($data->soldier);
+
+		//Si hay un json válido, y el soldado pertene al equipo del que se le va a eliminar
+		if($data && Team::find($data->team) && $soldier->team_id == $data->team){
+
+			// Eliminar el soldado del equipo
+			$soldier->team_id = null;
+
+			try{
+				// Guardar el soldado
+				$soldier->save();
+				$response = "OK";
+			}catch(\Exception $e){
+				$response = $e->getMessage();
+			}
+		}else {
+			$response = "Datos incorrectos";
+		}
+		// Enviar respuesta
+		return response($response);
+	}
+
+
+	public function changeLeader (Request $request) {
+		$response = "";
+		//Leer el contenido de la petición
+		$data = $request->getContent();
+
+		//Decodificar el json
+		$data = json_decode($data);
+
+		// Buscar al antiguo lider que se va a eliminar del equipo
+		$soldier = Soldier::find($data->soldier);
+
+		// Buscar al soldado que se va a ser el nuevo lider del equipo
+		$leader = Soldier::find($data->leader);
+
+		//Buscar al rquipo al que se le va a cambiar el soldado
+		$team = Team::find($data->team);
+
+		//Si hay un json válido, y los datos son correctos
+		if($data && $team->leader_id && $soldier->id == $team->leader_id && $leader){
+
+			// Eliminar el antiguo lider del equipo
+			$soldier->team_id = null;
+			// Guardar el lider del equipo
+			$team->leader_id = (isset($data->leader) ? $data->leader : $team->leader);
+			// Añadir al soldado al equipo
+			$leader->team_id = (isset($data->team) ? $data->team : $leader->team);
+
+			try{
+				// Actualizar el antiguo lider
+				$soldier->save();
+				// Guardar el equipo con nuevo lider
+				$team->save();
+				// Añadir nuevo lider al equipo
+				$leader->save();
+				$response = "OK";
+			}catch(\Exception $e){
+				$response = $e->getMessage();
+			}
+		}else {
+			$response = "Datos incorrectos";
+			}
+		// Enviar respuesta
+		return response($response);
 	}
 
 }

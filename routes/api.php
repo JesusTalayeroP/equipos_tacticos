@@ -35,6 +35,9 @@ Route::prefix('teams')->group(function () {
 	Route::post('/add/leader',[TeamController::class, 'addLeader']);
 	Route::post('/add/soldier',[TeamController::class, 'addSoldier']);
 	Route::post('/add/mission',[TeamController::class, 'addMission']);
+	Route::get('/viewMembers/{id}',[TeamController::class, 'teamMembers']);
+	Route::post('/sackSoldier',[TeamController::class, 'sackSoldier']);
+	Route::post('/changeLeader',[TeamController::class, 'changeLeader']);
 
 });
 
