@@ -241,6 +241,8 @@ class TeamController extends Controller
 		$team = Team::find($data->team);
 		// Buscar la misión por su id
 		$mission = Mission::find($data->mission);
+		
+		$exit = false;
 
 		$teams = Team::all();
 		for ($i=0; $i < count($teams); $i++) { 
@@ -295,6 +297,8 @@ class TeamController extends Controller
 	public function getSoldiers ($team_id) {
 		// Busca la lista de todos los soldados
 		$soldiers = Soldier::all();		
+		$response = "";
+		$response = [];
 
 		// Recorre la lista de soldados
 		for ($i=0; $i < count($soldiers); $i++) { 
@@ -306,7 +310,8 @@ class TeamController extends Controller
 					'id' => $soldier->id
 				];
 			}
-		}			
+		}		
+
 		// Envia el id de los soldados que pertenecen al equipo
 		return $response;
 	}
@@ -361,12 +366,23 @@ class TeamController extends Controller
 		// Si el equipo no existe
 		if(!$team) {
 			$response = "Equipo no encontrado";
+		} else if (!$team->leader_id) {
+			$response = "El equipo no tiene lider";
 		}
 		// Devuelve los detalles de los soldados
 		return response()->json($response);
 	}
 
-
+	/** POST
+	 * Elimina a un soldado del equipo
+	 *
+	 * Se recibe en la petición el id del equipo al que se le va eliminar 
+	 * el soldado, y el id del soldado que se va a eliminar.
+	 * {"soldier":"$idsoldado", "team":"idteam"} // 
+	 * El soldado se elimina del equipo
+	 *
+	 * @return response OK si se ha eliminado el soldado del equipo correctamente
+	 */
 	public function sackSoldier (Request $request) {
 		$response = "";
 		//Leer el contenido de la petición
@@ -397,7 +413,17 @@ class TeamController extends Controller
 		return response($response);
 	}
 
-
+	/** POST
+	 * Cambia el lider de un equipo
+	 *
+	 * Se recibe en la petición el id del equipo al que se le va a cambiar 
+	 * el lider, y el id del antiguo lider como soldier y el id del nuevo lider
+	 * como leader.
+	 * {"soldier":"$idsoldado", "leader":"$idlider", "team":"idteam"} // 
+	 * El lider antiguo se queda sin equipo y el nuevo lider se añade al equipo
+	 *
+	 * @return response OK si se ha eliminado al antiguo lider del equipo, y se ha añadido el nuevo lider
+	 */
 	public function changeLeader (Request $request) {
 		$response = "";
 		//Leer el contenido de la petición
@@ -412,7 +438,7 @@ class TeamController extends Controller
 		// Buscar al soldado que se va a ser el nuevo lider del equipo
 		$leader = Soldier::find($data->leader);
 
-		//Buscar al rquipo al que se le va a cambiar el soldado
+		//Buscar al equipo al que se le va a cambiar el lider
 		$team = Team::find($data->team);
 
 		//Si hay un json válido, y los datos son correctos
