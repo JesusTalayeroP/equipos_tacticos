@@ -146,7 +146,7 @@ class MissionController extends Controller
 
 
 	/** GET
-	 * Recibir los detalles de la misión pedida
+	 * Recibir los detalles de la misión pedida con /missions/details/{id}
 	 * 
 	 * Devuelve todos los detalles de la misión requerida. Devuelve la descripción,
 	 * prioridad, fecha de registro y estado de la misión; id y nombre del equipo que 

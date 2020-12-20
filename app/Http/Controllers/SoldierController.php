@@ -3,19 +3,22 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-
 use App\Models\Soldier;
-
 use App\Models\SoldierMission;
-
 use App\Models\Mission;
-
 
 class SoldierController extends Controller
 {
-    public function createSoldier(Request $request)
+	 /** POST
+	 * Crear soldados con soldiers/create
+	 *
+	 * Se introduce como parámetro (petición) el nombre, apellido, fecha de nacimiento,
+	 * fecha de incorporación, número de placa, que tiene que ser único, rango, y estado.
+	 * 
+	 * @return response OK si se ha añadido el soldado 
+	 */
+	public function createSoldier(Request $request)
 	{
-
 		//Para crear el primer Json de referencia
     	/*$json = [
     		"name" => 'Joselito',
@@ -40,8 +43,7 @@ class SoldierController extends Controller
 		if($data){
 			$soldier = new Soldier();
 
-			//Validar los datos antes de guardar el soldado
-
+			// Rellenar los campos del nuevo soldado
 			$soldier->name = $data->name;
 			$soldier->surname = $data->surname;
 			$soldier->birthdate = $data->birthdate;
@@ -57,21 +59,28 @@ class SoldierController extends Controller
 				$response = $e->getMessage();
 			}			
 		} else $response = "Datos incorrectos";
-		
+		// Enviar la respuesta
 		return response($response);
 	}
 
-
+	 /** POST
+	 * Actualizar soldados con soldiers/update/{id}
+	 *
+	 * Se reciben los parametros que se quieren actualizar del soldado. Se pueden
+	 * actualizar el nombre, apellido, fecha de nacimiento, fecha de incorporación
+	 * número de placa y rango. 
+	 *
+	 * @return response OK si se ha actualizado el soldado
+	 * @param $id id del soldado que hay que actualizar
+	 */
 	public function updateSoldier(Request $request, $id){
 
 		$response = "";
 
 		//Buscar el soldado por su id
-
 		$soldier = Soldier::find($id);
-
+		// Si encuentra el soldado
 		if($soldier){
-
 			//Leer el contenido de la petición
 			$data = $request->getContent();
 
@@ -81,7 +90,7 @@ class SoldierController extends Controller
 			//Si hay un json válido, buscar el soldado
 			if($data){
 			
-				//TODO: Validar los datos antes de guardar el soldado
+				// Actualizar los campos con la petición recibida
 				$soldier->name = (isset($data->name) ? $data->name : $soldier->name);
 				$soldier->surname = (isset($data->surname) ? $data->surname : $soldier->surname);
 				$soldier->birthdate = (isset($data->birthdate) ? $data->birthdate : $soldier->birthdate);
@@ -96,25 +105,30 @@ class SoldierController extends Controller
 					$response = $e->getMessage();
 				}
 			}
-
 		}else{
 			$response = "No soldier";
 		}
-	
+		// Enviar respuesta
 		return response($response);
 	}
 
-
+	/** POST
+	 * Actualizar el estado de los soldados con soldiers/state/{id}
+	 *
+	 * Recibe el nuevo estado del soldado que hay que actualizar en la peticion. Puede
+	 * ser activo, retirado o baja.
+	 *
+	 * @return response OK si se ha actualizado el estado del soldado
+	 * @param $id id del soldado que hay que actualizar
+	 */
 	public function stateSoldier(Request $request, $id){
 
 		$response = "";
 
 		//Buscar el soldado por su id
-
 		$soldier = Soldier::find($id);
-
+		// Si encuentra el soldado
 		if($soldier){
-
 			//Leer el contenido de la petición
 			$data = $request->getContent();
 
@@ -124,7 +138,7 @@ class SoldierController extends Controller
 			//Si hay un json válido, buscar el soldado
 			if($data){
 			
-				//TODO: Validar los datos antes de guardar el soldado
+				// Actualizar el estado del soldado
 				$soldier->state = (isset($data->state) ? $data->state : $soldier->state);
 
 				try{
@@ -134,25 +148,34 @@ class SoldierController extends Controller
 					$response = $e->getMessage();
 				}
 			}
-
 		}else{
 			$response = "No soldier";
 		}
-	
+		// Enviar respuesta 
 		return response($response);
 	}
 
-
+	 /** GET
+	 * Recibir todos los soldados con soldiers/viewAll
+	 * 
+	 * Devuelve todos los soldados almacenados en la base de datos. 
+	 * Muestra el nombre, apellido, rango, numero de placa, id del equipo 
+	 * al que pertenece y nombre del mismo.
+	 *
+	 * @return todos los soldados
+	 */
 	public function viewAll(){
 
 		$response = "";
+		// Guardar todos los soldados
 		$soldiers = Soldier::all();
 		$response = [];
 
+		// Si hay soldados
 		if($soldiers){
-
+			// Recorrer todos los soldados recibidos
 			foreach ($soldiers as $soldier) {
-
+				// Si pertenece a un equipo
 				if ($soldier->team_id) {
 					$response [] = [
 					"name" => $soldier->name,
@@ -163,6 +186,7 @@ class SoldierController extends Controller
 					"team_name" => $soldier->team->name
 					];
 				} else {
+					// Si no pertenece a un equipo
 					$response [] = [
 					"name" => $soldier->name,
 					"surname" => $soldier->surname,
@@ -173,23 +197,34 @@ class SoldierController extends Controller
 					];
 				}			
 			}		
-
 		}else{
 			$response = "Soldado no encontrado";
 		}
-
+		// Enviar los soldados 
 		return response()->json($response);
 	}
 
-
+	/** GET
+	 * Recibir los detalles del soldado solicitado con /soldiers/details/{id}
+	 * 
+	 * Devuelve todos los detalles del soldado. Devuelve el nombre, apellido,
+	 * fecha de nacimiento, fecha de incorporación, numero de placa, rango, estado,
+	 * id y nombre del equipo al que pertenece(en caso de pertenecer a un equipo), 
+	 * y datos del lider del equipo en caso de tenerlo (id, rango y apellido del lider).
+	 *
+	 * @return todos los detalles del soldado 
+	 * @param $id el id del soldado  
+	 */
 	public function detailsSoldier($id){
 		$response = "";
+		// Buscar el soldado por id
 		$soldier = Soldier::find($id);
-
+		// Si el soldado encontrado pertenece a un equipo y tiene lider
 		if($soldier->team && $soldier->team->leader_id) {
-		$leader = Soldier::find($soldier->team->leader_id);
+			// Buscar el lider del equipo
+			$leader = Soldier::find($soldier->team->leader_id);
 		}
-
+		// Guardar los datos "por defecto" del soldado 
 		$response = [
 			"name" => $soldier->name,
 			"surname" => $soldier->surname,
@@ -204,29 +239,44 @@ class SoldierController extends Controller
 			"leader_rank" => "no captain rank",
 			"leader_surname" => "no captain surname"
 		];
-		
+		// En caso de que tenga equipo, guardar sus datos
 		if ($soldier->team_id){
 			$response ['team_id'] = $soldier->team->id;
 			$response ['team_name'] = $soldier->team->name;
 		} 
+		// En caso de que el equipo tenga lider, guardar sus datos
 		if ($soldier->team && $soldier->team->leader_id){		
 			$response ['leader_id'] = $leader->id;
 			$response ['leader_rank'] = $leader->rank;
 			$response ['leader_surname'] = $leader->surname;	
 		}
-
+		// Devuelve los detalles del soldado
 		return response()->json($response);
 	}
 
-
+	 /** GET
+	 * Recibir los detalles de las misiones en las que ha participado un soldado con /soldiers/history/{id}
+	 * 
+	 * Devuelve todos los detalles de las misiones en las que ha participado un soldado
+	 * Devuelve el código, fecha de registro y estado de todas las misiones en las que haya 
+	 * participado el soldado en cuestión. 
+	 * 
+	 * @return todos los detalles de las misiones en las que ha participado el soldado 
+	 * @param $id el id del soldado 
+	 * 
+	 */
 	public function missionHistory($id){
 		$response = "";
+		// Buscar todos los soldados en tabla intermedia SoldierMission
 		$soldiers = SoldierMission::all();
 		$response = [];
-
+		// Recorrer cada soldado almacenado en la tabla
 		foreach ($soldiers as $soldier) {
+			// Si el id del soldado introducido coincide con alguno de la lista
 			if($soldier->soldier_id == $id) {
+				// Buscar la mission en la que ha participado el soldado
 				$mission = Mission::find($soldier->mission_id);
+				// Guardar los datos de la misión
 				$response [] = [
 					'mission_id' => $mission->id,
 					'mission_date' => $mission->register_date,
@@ -234,11 +284,11 @@ class SoldierController extends Controller
 				];
 			} 
 		}
-
+		// Si no encuentra ningún soldado que haya participado en misiones
 		if($response == "") {
 			$response = "información no disponible";
 		}
-
+		// Devuelve los detalles de la/s misión/es en la/s que haya participado el soldado
 		return response()->json($response);
 	}
 }
