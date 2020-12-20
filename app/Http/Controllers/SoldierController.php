@@ -224,7 +224,6 @@ class SoldierController extends Controller
 		$soldiers = SoldierMission::all();
 		$response = [];
 
-
 		foreach ($soldiers as $soldier) {
 			if($soldier->soldier_id == $id) {
 				$mission = Mission::find($soldier->mission_id);
